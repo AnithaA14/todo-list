@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated To-Do List</title>
+
+    <!-- ================= CSS STYLE ================= -->
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(120deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Animated background circles */
+        .bg-circle {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            animation: float 10s infinite alternate;
+        }
+
+        .bg-circle:nth-child(1) {
+            top: 10%;
+            left: 15%;
+        }
+
+        .bg-circle:nth-child(2) {
+            bottom: 15%;
+            right: 10%;
+            animation-delay: 3s;
+        }
+
+        @keyframes float {
+            from {
+                transform: translateY(0);
+            }
+            to {
+                transform: translateY(-40px);
+            }
+        }
+
+        /* Glassmorphism container */
+        .container {
+            width: 90%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        /* Input section */
+        .input-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 10px;
+            background: #00ffd5;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            box-shadow: 0 0 15px #00ffd5;
+            transform: scale(1.05);
+        }
+
+        /* Task list */
+        ul {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        li {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .task-text {
+            flex: 1;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .delete {
+            background: #ff4d4d;
+            color: white;
+        }
+
+        .delete:hover {
+            box-shadow: 0 0 10px #ff4d4d;
+        }
+
+        /* Fade out animation */
+        .fade-out {
+            animation: fadeOut 0.4s forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+        }
+
+        /* Empty message */
+        .empty {
+            text-align: center;
+            color: white;
+            margin-top: 15px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Background animation -->
+    <div class="bg-circle"></div>
+    <div class="bg-circle"></div>
+
+    <div class="container">
+        <h1>✨ To-Do List</h1>
+
+        <div class="input-box">
+            <input type="text" id="taskInput" placeholder="Enter a task...">
+            <button onclick="addTask()">Add</button>
+        </div>
+
+        <ul id="taskList"></ul>
+        <p class="empty" id="emptyMsg">No tasks yet 🚀</p>
+    </div>
+
+    <!-- ================= JAVASCRIPT ================= -->
+    <script>
+        const taskInput = document.getElementById("taskInput");
+        const taskList = document.getElementById("taskList");
+        const emptyMsg = document.getElementById("emptyMsg");
+
+        // Load tasks on refresh
+        document.addEventListener("DOMContentLoaded", loadTasks);
+
+        function addTask() {
+            const taskText = taskInput.value.trim();
+            if (taskText === "") return;
+
+            createTask(taskText, false);
+            saveTasks();
+
+            taskInput.value = "";
+        }
+
+        function createTask(text, completed) {
+            const li = document.createElement("li");
+
+            const span = document.createElement("span");
+            span.className = "task-text";
+            span.textContent = text;
+
+            if (completed) span.classList.add("completed");
+
+            span.onclick = () => {
+                span.classList.toggle("completed");
+                saveTasks();
+            };
+
+            const actions = document.createElement("div");
+            actions.className = "actions";
+
+            const delBtn = document.createElement("button");
+            delBtn.textContent = "🗑️";
+            delBtn.className = "delete";
+
+            delBtn.onclick = () => {
+                li.classList.add("fade-out");
+                setTimeout(() => {
+                    li.remove();
+                    saveTasks();
+                }, 400);
+            };
+
+            actions.appendChild(delBtn);
+            li.appendChild(span);
+            li.appendChild(actions);
+            taskList.appendChild(li);
+
+            updateEmptyMessage();
+        }
+
+        function saveTasks() {
+            const tasks = [];
+            document.querySelectorAll("li").forEach(li => {
+                tasks.push({
+                    text: li.querySelector(".task-text").textContent,
+                    completed: li.querySelector(".task-text").classList.contains("completed")
+                });
+            });
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            updateEmptyMessage();
+        }
+
+        function loadTasks() {
+            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            tasks.forEach(task => createTask(task.text, task.completed));
+            updateEmptyMessage();
+        }
+
+        function updateEmptyMessage() {
+            emptyMsg.style.display = taskList.children.length === 0 ? "block" : "none";
+        }
+    </script>
+
+</body>
+</html>
